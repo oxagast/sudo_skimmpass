@@ -11,3 +11,16 @@ Note: *You will need to perform this action as root.*
 You can now open a new terminal, and run `sudo su` and enter your passphrase.  You may
 now log back out, and finally, check `/tmp/stolen.txt`.  It should now contain your
 passphrase.
+
+The abused function from sudo comes from the file `tgetpass.c` and the relevant call to
+read() is:
+
+```
+  while (cp < ep) {
+    nr = read(fd, &c, 1);
+    if (nr != 1 || c == '\n' || c == '\r')
+      break;
+```
+
+Where `nr = read(fd, &c, 1);` can be isolated and swapped out for our jacking library to read
+and log entry from the terminal's file descriptor to a file.
