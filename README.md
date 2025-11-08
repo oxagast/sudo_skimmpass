@@ -13,7 +13,7 @@ now log back out, and finally, check `/tmp/stolen.txt`.  It should now contain y
 passphrase.
 
 The abused function from sudo comes from the file `tgetpass.c` and the relevant call to
-`read()` (line ~393 in commit 2a33699f8a0520161a8b507a9cb256802d6f45cb from sudo-project/sudo)
+`read()` line ~393 in [commit 2a33699f8a0520161a8b507a9cb256802d6f45cb from sudo-project/sudo](https://github.com/sudo-project/sudo/blob/3d467a705ea6ee53081cb11cc21ecf08eb47700d/src/tgetpass.c#L393).
 is:
 
 ```
