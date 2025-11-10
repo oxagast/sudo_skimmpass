@@ -30,5 +30,7 @@ is:
 Where `nr = read(fd, &c, 1);` can be isolated and swapped out for our jacking library to read
 and log entry from the terminal's file descriptor to a file.
 
-### Thanks
+### Greetz and Thankz
 Vesteria
+blissful boy
+atdma
