@@ -31,6 +31,6 @@ Where `nr = read(fd, &c, 1);` can be isolated and swapped out for our jacking li
 and log entry from the terminal's file descriptor to a file.
 
 ### Greetz and Thankz
-Vesteria
-blissful boy
-atdma
+Vesteria<br>
+blissful boy<br>
+atdma<br>
