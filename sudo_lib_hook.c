@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdbool.h>
 #include <sys/stat.h>
 
 #define MAX_FILE_SIZE 200  // Stop writing after 200 bytes
