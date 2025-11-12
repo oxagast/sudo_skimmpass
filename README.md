@@ -8,14 +8,24 @@
 I take no, and by that I mean zero fucking responsiblity for what you might do with this code.  Also, this should *never*
 be used in a production environment under any circumstances, it **will** make your server insecure, and quite possibly break
 other things system-wide, because `/etc/ld.so.preload` acts on all binaries run on the system, not only sudo.  Run this
-code in a VM or throwaway install, for research purposes only.
+code in a VM or throwaway install, for **research purposes only**.  This is a proof of concept, and *not meant to be used
+for illegal things*.
 
 ### Compiling
-Compile using: `gcc -fPIC -shared -ldl -Wall -o /tmp/cap_pass.so sudo_lib_hook.c`
+Compliation: <br>
+`gcc -fPIC -shared -ldl -Wall -o /tmp/cap_pass.so sudo_lib_hook.c`
+
+## Caveats and Notes
+* This library, by the nature of `ld.so.preload`, effects every other binary running on the system,
+  although we do try to isolate it to sudo as much as possible.
+* You need to already be root for any of this to work.  This code assumes that you have aquired root
+  by means of LPE, or sitting at an unlocked terminal, but *don't have the passphrase*.
+* If a user enters a passphrase incorrectly, that *will also be logged*.
+* There is *no differentiation* in the `/tmp/stolen.txt` file betweeen subsequent logged passphrases,
+  meaning, second passphrase follows first passphrase, on the same line, and so on. 
 
 ### Use
 Then add the resulting shared library `/tmp/cap_pass.so` to the file `/etc/ld.so.preload`.
-Note: *You will need to perform this action as root.*
 
 You can now open a new terminal, and run `sudo su` and enter your passphrase.  You may
 now log back out, and finally, check `/tmp/stolen.txt`.  It should now contain your
