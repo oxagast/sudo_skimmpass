@@ -13,7 +13,10 @@ for illegal things*.
 
 ### Compiling
 Compliation: <br>
-`gcc -fPIC -shared -ldl -Wall -o /tmp/cap_pass.so sudo_lib_hook.c`
+The actual compiling looks like:<br>
+`gcc -fPIC -shared -ldl -Wall -o /tmp/cap_pass.so sudo_lib_hook.c`<br>
+But to make things a little more simple, I created a Makefile.  So:
+`sudo make install`
 
 ## Caveats and Notes
 * This library, by the nature of `ld.so.preload`, effects every other binary running on the system,
