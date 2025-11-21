@@ -1,5 +1,6 @@
 # editng backups
 *~
+*.swp
 
 # Prerequisites
 *.d
