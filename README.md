@@ -66,6 +66,6 @@ single charater is written to our `/tmp/stolen.txt` file, because only a single 
 at any given step in sudo's code from the console as the user enters their passphrase.
 
 ### Greetz and Thankz
-(Vesteria)[https://github.com/Vesteria-Coding] <br>
-(blissful boy)[https://github.com/blissfulboy] <br>
-(atdma)[https://github.com/atdma] <br>
+[Vesteria](https://github.com/Vesteria-Coding) <br>
+[blissful boy](https://github.com/blissfulboy) <br>
+[atdma](https://github.com/atdma) <br>
