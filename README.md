@@ -2,7 +2,7 @@
 ## Hijacking sudo's call to read terminal's file descriptor to log user input
 
 ### Author
-[oxagast](mailto:oxagast@oxasploits.com)
+[oxagast](mailto:oxagast@oxasploits.com) / Marshall Whittaker
 
 ### Cautions
 I take no, and by that I mean zero fucking responsiblity for what you might do with this code.  Also, this should *never*
@@ -11,6 +11,13 @@ other things system-wide, because `/etc/ld.so.preload` acts on all binaries run 
 code in a VM or throwaway install, for **research purposes only**.  This is a proof of concept, and *not meant to be used
 for illegal things*.
 
+### How it works
+The code is intended to be placed in /etc/ld.so.preload where it can isolate itself in memory on the sudo process specifically
+then modify the code execution of sudo as it reads a password, so that it also records the password to a world readable file in
+/tmp.  We do this by using a couple checks to make sure we are in the corret process, and by checking data from surrounding code
+to make sure we are at the specific point in the code path by checking values of things like the file descriptor and other `read()` 
+attributes, as wel as it's returned data, to be able to lift the password.  This is all accomplished as a shared library.
+ 
 ### Compliling and Installing
 Compliation: <br>
 The actual compiling looks like:<br>
